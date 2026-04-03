@@ -1,0 +1,26 @@
+@base = http://localhost:8000/api
+
+### List categories
+GET {{base}}/categories
+
+### Create category
+POST {{base}}/categories
+Content-Type: application/json
+
+{
+  "name": "Fitness",
+  "color": "#22c55e",
+  "icon": "🏋️"
+}
+
+### Update category
+PUT {{base}}/categories/CATEGORY_ID
+Content-Type: application/json
+
+{
+  "name": "Fitness & Health",
+  "color": "#16a34a"
+}
+
+### Delete category
+DELETE {{base}}/categories/CATEGORY_ID

@@ -1,0 +1,59 @@
+@base = http://localhost:8000/api
+
+### List journal points (today)
+GET {{base}}/journal?date=2026-04-03
+
+### List journal points (week)
+GET {{base}}/journal?week=2026-W14
+
+### List journal points (month)
+GET {{base}}/journal?month=2026-04
+
+### Daily score
+GET {{base}}/journal/score?date=2026-04-03
+
+### Create journal point
+POST {{base}}/journal
+Content-Type: application/json
+
+{
+  "title": "Finished the project plan",
+  "description": "Completed all phases of the gratification app plan",
+  "date": "2026-04-03",
+  "score": 5,
+  "tag": "positive"
+}
+
+### Get journal point
+GET {{base}}/journal/JOURNAL_ID
+
+### Update journal point
+PUT {{base}}/journal/JOURNAL_ID
+Content-Type: application/json
+
+{
+  "score": 7
+}
+
+### Delete journal point
+DELETE {{base}}/journal/JOURNAL_ID
+
+### Add reflection
+POST {{base}}/journal/JOURNAL_ID/reflections
+Content-Type: application/json
+
+{
+  "type": "lesson_learned",
+  "content": "Breaking tasks into phases makes large projects manageable"
+}
+
+### Update reflection
+PUT {{base}}/reflections/REFLECTION_ID
+Content-Type: application/json
+
+{
+  "content": "Breaking tasks into phases makes large projects manageable and less overwhelming"
+}
+
+### Delete reflection
+DELETE {{base}}/reflections/REFLECTION_ID

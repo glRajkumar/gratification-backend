@@ -1,0 +1,51 @@
+@base = http://localhost:8000/api
+
+### List todos
+GET {{base}}/todos
+
+### List pending todos
+GET {{base}}/todos?status=pending
+
+### List todos by date
+GET {{base}}/todos?date=2026-04-03
+
+### Create todo
+POST {{base}}/todos
+Content-Type: application/json
+
+{
+  "title": "Review weekly goals",
+  "dueDate": "2026-04-05"
+}
+
+### Update todo
+PUT {{base}}/todos/TODO_ID
+Content-Type: application/json
+
+{
+  "title": "Review weekly goals and progress"
+}
+
+### Complete todo (no journal point)
+POST {{base}}/todos/TODO_ID/complete
+Content-Type: application/json
+
+{
+  "createJournalPoint": false
+}
+
+### Complete todo (with journal point)
+POST {{base}}/todos/TODO_ID/complete
+Content-Type: application/json
+
+{
+  "createJournalPoint": true,
+  "journalPoint": {
+    "title": "Completed: Review weekly goals",
+    "score": 3,
+    "tag": "positive"
+  }
+}
+
+### Delete todo
+DELETE {{base}}/todos/TODO_ID

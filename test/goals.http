@@ -1,0 +1,47 @@
+@base = http://localhost:8000/api
+
+### List goals
+GET {{base}}/goals
+
+### List active weekly goals
+GET {{base}}/goals?status=active&period=weekly
+
+### Create goal
+POST {{base}}/goals
+Content-Type: application/json
+
+{
+  "title": "Exercise 4 times a week",
+  "period": "weekly",
+  "targetCount": 4,
+  "startDate": "2026-04-07",
+  "endDate": "2026-04-13"
+}
+
+### Update goal
+PUT {{base}}/goals/GOAL_ID
+Content-Type: application/json
+
+{
+  "targetCount": 3
+}
+
+### Add progress (link journal point)
+POST {{base}}/goals/GOAL_ID/progress
+Content-Type: application/json
+
+{
+  "journalPointId": "JOURNAL_POINT_ID"
+}
+
+### Close goal
+POST {{base}}/goals/GOAL_ID/close
+Content-Type: application/json
+
+{
+  "status": "achieved",
+  "summaryNote": "Hit all 4 sessions this week"
+}
+
+### Delete goal
+DELETE {{base}}/goals/GOAL_ID

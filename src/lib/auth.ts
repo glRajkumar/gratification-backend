@@ -15,6 +15,7 @@ import {
   sendVerificationEmail,
   welcomeEmail,
 } from '../templates/emails'
+import { seedDefaultCategories } from '../utils/seed-categories'
 
 try {
   await connectRedis()
@@ -90,6 +91,8 @@ export const auth = betterAuth({
 
         if (user != null) {
           await welcomeEmail(user)
+          const userId = ctx.context.newSession?.user.id
+          if (userId) await seedDefaultCategories(userId)
         }
       }
     }),
