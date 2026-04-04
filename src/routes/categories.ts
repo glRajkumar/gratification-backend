@@ -1,6 +1,6 @@
 import { Hono } from "hono"
 import { zValidator as zv } from "@hono/zod-validator"
-import { requireAuth } from "../middlewares/auth"
+
 import {
   listCategories,
   createCategory,
@@ -11,11 +11,8 @@ import {
   createCategorySchema,
   updateCategorySchema,
 } from "../validations/categories"
-import type { AppEnv } from "../types/hono"
 
-const categoriesRouter = new Hono<AppEnv>()
-
-categoriesRouter.use(requireAuth)
+const categoriesRouter = new Hono()
 
 categoriesRouter.get("/", listCategories)
 categoriesRouter.post("/", zv("json", createCategorySchema), createCategory)

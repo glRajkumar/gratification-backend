@@ -1,6 +1,6 @@
 import { Hono } from "hono"
 import { zValidator as zv } from "@hono/zod-validator"
-import { requireAuth } from "../middlewares/auth"
+
 import {
   listGoals,
   createGoal,
@@ -16,11 +16,8 @@ import {
   addProgressSchema,
   closeGoalSchema,
 } from "../validations/goals"
-import type { AppEnv } from "../types/hono"
 
-const goalsRouter = new Hono<AppEnv>()
-
-goalsRouter.use(requireAuth)
+const goalsRouter = new Hono()
 
 goalsRouter.get("/", zv("query", goalQuerySchema), listGoals)
 goalsRouter.post("/", zv("json", createGoalSchema), createGoal)

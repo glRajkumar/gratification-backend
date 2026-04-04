@@ -1,12 +1,10 @@
 import { Hono } from "hono"
 import { zValidator as zv } from "@hono/zod-validator"
 import { z } from "zod"
-import { requireAuth } from "../middlewares/auth"
-import { getCurrentIntention, setIntention } from "../controllers/intentions"
-import type { AppEnv } from "../types/hono"
 
-const intentionsRouter = new Hono<AppEnv>()
-intentionsRouter.use(requireAuth)
+import { getCurrentIntention, setIntention } from "../controllers/intentions"
+
+const intentionsRouter = new Hono()
 
 intentionsRouter.get("/current", getCurrentIntention)
 intentionsRouter.post(

@@ -1,6 +1,6 @@
 import { Hono } from "hono"
 import { zValidator as zv } from "@hono/zod-validator"
-import { requireAuth } from "../middlewares/auth"
+
 import {
   listTodos,
   createTodo,
@@ -14,11 +14,8 @@ import {
   todoQuerySchema,
   completeTodoSchema,
 } from "../validations/todos"
-import type { AppEnv } from "../types/hono"
 
-const todosRouter = new Hono<AppEnv>()
-
-todosRouter.use(requireAuth)
+const todosRouter = new Hono()
 
 todosRouter.get("/", zv("query", todoQuerySchema), listTodos)
 todosRouter.post("/", zv("json", createTodoSchema), createTodo)

@@ -1,6 +1,6 @@
 import { Hono } from "hono"
 import { zValidator as zv } from "@hono/zod-validator"
-import { requireAuth } from "../middlewares/auth"
+
 import {
   listJournalPoints,
   createJournalPoint,
@@ -25,13 +25,9 @@ import {
   createReflectionSchema,
   updateReflectionSchema,
 } from "../validations/journal"
-import type { AppEnv } from "../types/hono"
 
-const journalRouter = new Hono<AppEnv>()
+const journalRouter = new Hono()
 
-journalRouter.use(requireAuth)
-
-// Named endpoints first (before /:id) to avoid route conflicts
 journalRouter.get("/score", zv("query", scoreQuerySchema), getDailyScore)
 journalRouter.get("/on-this-day", getOnThisDay)
 journalRouter.post("/quick", zv("json", createQuickJournalPointSchema), createQuickJournalPoint)
@@ -42,20 +38,13 @@ journalRouter.get("/:id", getJournalPoint)
 journalRouter.put("/:id", zv("json", updateJournalPointSchema), updateJournalPoint)
 journalRouter.delete("/:id", deleteJournalPoint)
 
-journalRouter.post(
-  "/:id/reflections",
-  zv("json", createReflectionSchema),
-  addReflection,
-)
+journalRouter.post("/:id/reflections", zv("json", createReflectionSchema), addReflection)
 
 journalRouter.post("/:id/attachments", uploadAttachments)
 
 export { journalRouter }
 
-// Standalone reflections router (mounted separately at /reflections)
-const reflectionsRouter = new Hono<AppEnv>()
-
-reflectionsRouter.use(requireAuth)
+const reflectionsRouter = new Hono()
 
 reflectionsRouter.put("/:id", zv("json", updateReflectionSchema), updateReflection)
 reflectionsRouter.delete("/:id", deleteReflection)
