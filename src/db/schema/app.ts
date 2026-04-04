@@ -211,6 +211,7 @@ export const journalPointsRelations = relations(
     }),
     reflections: many(reflections),
     goalProgress: many(goalProgress),
+    attachments: many(attachments),
   }),
 )
 
@@ -253,6 +254,31 @@ export const goalProgressRelations = relations(goalProgress, ({ one }) => ({
     references: [journalPoints.id],
   }),
 }))
+
+export const attachments = pgTable(
+  "attachments",
+  {
+    id: text("id")
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
+    journalPointId: text("journal_point_id")
+      .notNull()
+      .references(() => journalPoints.id, { onDelete: "cascade" }),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    type: text("type", { enum: ["image", "audio", "video"] }).notNull(),
+    url: text("url").notNull(),
+    publicId: text("public_id").notNull(),
+    filename: text("filename"),
+    size: integer("size"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (t) => [
+    index("attachments_journalPointId_idx").on(t.journalPointId),
+    index("attachments_userId_idx").on(t.userId),
+  ],
+)
 
 export const achievements = pgTable(
   "achievements",
@@ -390,4 +416,12 @@ export const habitEntriesRelations = relations(habitEntries, ({ one }) => ({
 
 export const userSettingsRelations = relations(userSettings, ({ one }) => ({
   user: one(users, { fields: [userSettings.userId], references: [users.id] }),
+}))
+
+export const attachmentsRelations = relations(attachments, ({ one }) => ({
+  journalPoint: one(journalPoints, {
+    fields: [attachments.journalPointId],
+    references: [journalPoints.id],
+  }),
+  user: one(users, { fields: [attachments.userId], references: [users.id] }),
 }))

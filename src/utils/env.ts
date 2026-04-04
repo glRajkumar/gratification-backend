@@ -15,4 +15,8 @@ export const env = {
   EMAIL_ID: required('EMAIL_ID'),
   EMAIL_PASS: required('EMAIL_PASS'),
 
+  CLOUDINARY_CLOUD_NAME: required('CLOUDINARY_CLOUD_NAME'),
+  CLOUDINARY_API_KEY: required('CLOUDINARY_API_KEY'),
+  CLOUDINARY_API_SECRET: required('CLOUDINARY_API_SECRET'),
+
 } as const

@@ -1,0 +1,17 @@
+@base = http://localhost:8000/api
+
+### Upload attachments to a journal point
+# Supports: images (jpg, png, gif, webp, heic), audio (mp3, wav, ogg, webm, m4a, aac), video (mp4, webm, mov)
+# Max 10 MB per file · max 10 attachments per journal point
+POST {{base}}/journal/JOURNAL_POINT_ID/attachments
+Content-Type: multipart/form-data; boundary=boundary
+
+--boundary
+Content-Disposition: form-data; name="files"; filename="photo.jpg"
+Content-Type: image/jpeg
+
+< ./sample-photo.jpg
+--boundary--
+
+### Delete attachment
+DELETE {{base}}/attachments/ATTACHMENT_ID

@@ -1,7 +1,7 @@
 import { and, eq, gte, lte, sql } from "drizzle-orm"
 import type { Context } from "hono"
 import { db } from "../lib/db"
-import { journalPoints, reflections } from "../db/schema/app"
+import { journalPoints, reflections, attachments } from "../db/schema/app"
 import type { AppEnv } from "../types/hono"
 import {
   checkJournalAchievements,
@@ -85,13 +85,20 @@ export async function getJournalPoint(c: Context<AppEnv>) {
     .where(and(eq(journalPoints.id, id), eq(journalPoints.userId, userId)))
   if (!rows[0]) return c.json({ message: "Not found" }, 404)
 
-  const pointReflections = await db
-    .select()
-    .from(reflections)
-    .where(eq(reflections.journalPointId, id))
-    .orderBy(reflections.createdAt)
+  const [pointReflections, pointAttachments] = await Promise.all([
+    db
+      .select()
+      .from(reflections)
+      .where(eq(reflections.journalPointId, id))
+      .orderBy(reflections.createdAt),
+    db
+      .select()
+      .from(attachments)
+      .where(eq(attachments.journalPointId, id))
+      .orderBy(attachments.createdAt),
+  ])
 
-  return c.json({ ...rows[0], reflections: pointReflections })
+  return c.json({ ...rows[0], reflections: pointReflections, attachments: pointAttachments })
 }
 
 export async function updateJournalPoint(c: Context<AppEnv>) {

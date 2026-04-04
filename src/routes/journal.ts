@@ -13,6 +13,7 @@ import {
   deleteReflection,
   getOnThisDay,
 } from "../controllers/journal"
+import { uploadAttachments } from "../controllers/attachments"
 import {
   createJournalPointSchema,
   updateJournalPointSchema,
@@ -43,6 +44,8 @@ journalRouter.post(
   zv("json", createReflectionSchema),
   addReflection,
 )
+
+journalRouter.post("/:id/attachments", uploadAttachments)
 
 export { journalRouter }
 

@@ -10,6 +10,7 @@ import {
   goalProgress,
   habits,
   habitEntries,
+  attachments,
 } from "../db/schema/app"
 import type { AppEnv } from "../types/hono"
 
@@ -22,12 +23,14 @@ export async function exportData(c: Context<AppEnv>) {
     userTodos,
     userGoals,
     userHabits,
+    userAttachments,
   ] = await Promise.all([
     db.select().from(categories).where(eq(categories.userId, userId)),
     db.select().from(journalPoints).where(eq(journalPoints.userId, userId)).orderBy(journalPoints.date),
     db.select().from(todos).where(eq(todos.userId, userId)),
     db.select().from(goals).where(eq(goals.userId, userId)),
     db.select().from(habits).where(eq(habits.userId, userId)),
+    db.select().from(attachments).where(eq(attachments.userId, userId)),
   ])
 
   const journalIds = userJournalPoints.map((j) => j.id)
@@ -82,5 +85,6 @@ export async function exportData(c: Context<AppEnv>) {
     goalProgress: allGoalProgress,
     habits: userHabits,
     habitEntries: userHabitEntries,
+    attachments: userAttachments,
   })
 }

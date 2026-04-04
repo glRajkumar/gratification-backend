@@ -10,6 +10,7 @@ import { achievementsRouter } from "./routes/achievements"
 import { habitsRouter } from "./routes/habits"
 import { exportRouter } from "./routes/export"
 import { settingsRouter } from "./routes/settings"
+import { attachmentsRouter } from "./routes/attachments"
 
 const app = new Hono()
 
@@ -25,5 +26,6 @@ app.route("/api/achievements", achievementsRouter)
 app.route("/api/habits", habitsRouter)
 app.route("/api/export", exportRouter)
 app.route("/api/settings", settingsRouter)
+app.route("/api/attachments", attachmentsRouter)
 
 export default app
