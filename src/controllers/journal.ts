@@ -3,6 +3,10 @@ import type { Context } from "hono"
 import { db } from "../lib/db"
 import { journalPoints, reflections } from "../db/schema/app"
 import type { AppEnv } from "../types/hono"
+import {
+  checkJournalAchievements,
+  checkReflectionAchievements,
+} from "../utils/achievements"
 
 function weekBounds(weekStr: string): { start: string; end: string } {
   const [year, week] = weekStr.split("-W").map(Number)
@@ -62,11 +66,13 @@ export async function createJournalPoint(c: Context<AppEnv>) {
     categoryId?: string
     score: number
     tag: "positive" | "negative" | "neutral"
+    mood?: number
   }
   const [row] = await db
     .insert(journalPoints)
     .values({ ...body, userId })
     .returning()
+  void checkJournalAchievements(userId, body.date)
   return c.json(row, 201)
 }
 
@@ -144,6 +150,7 @@ export async function addReflection(c: Context<AppEnv>) {
   const body = c.req.valid("json" as never) as {
     type: string
     content: string
+    cognitiveDistortion?: string
   }
 
   const point = await db
@@ -156,7 +163,44 @@ export async function addReflection(c: Context<AppEnv>) {
     .insert(reflections)
     .values({ journalPointId: id, ...body } as typeof reflections.$inferInsert)
     .returning()
+
+  void checkReflectionAchievements(userId, id)
   return c.json(row, 201)
+}
+
+export async function getOnThisDay(c: Context<AppEnv>) {
+  const userId = c.get("userId")
+  const today = new Date()
+  const month = today.getMonth() + 1
+  const day = today.getDate()
+  const currentYear = today.getFullYear()
+
+  const rows = await db
+    .select()
+    .from(journalPoints)
+    .where(
+      and(
+        eq(journalPoints.userId, userId),
+        sql`EXTRACT(MONTH FROM ${journalPoints.date}::date) = ${month}`,
+        sql`EXTRACT(DAY FROM ${journalPoints.date}::date) = ${day}`,
+        sql`EXTRACT(YEAR FROM ${journalPoints.date}::date) < ${currentYear}`,
+      ),
+    )
+    .orderBy(journalPoints.date)
+
+  const byYear = new Map<number, typeof rows>()
+  for (const row of rows) {
+    const year = new Date(row.date).getFullYear()
+    const existing = byYear.get(year) ?? []
+    existing.push(row)
+    byYear.set(year, existing)
+  }
+
+  const result = [...byYear.entries()]
+    .sort((a, b) => b[0] - a[0])
+    .map(([year, points]) => ({ year, points }))
+
+  return c.json(result)
 }
 
 export async function updateReflection(c: Context<AppEnv>) {

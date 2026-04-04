@@ -1,0 +1,84 @@
+@base = http://localhost:8000/api
+
+### List habits (with today's check-in state)
+GET {{base}}/habits
+
+### Create habit — daily
+POST {{base}}/habits
+Content-Type: application/json
+
+{
+  "title": "Morning run",
+  "frequency": "daily",
+  "targetCount": 1,
+  "color": "#10b981",
+  "icon": "🏃",
+  "autoJournalOnComplete": false,
+  "autoJournalOnMiss": false
+}
+
+### Create habit — weekdays only
+POST {{base}}/habits
+Content-Type: application/json
+
+{
+  "title": "Read for 20 minutes",
+  "frequency": "weekdays",
+  "targetCount": 1,
+  "color": "#6366f1",
+  "icon": "📖",
+  "autoJournalOnComplete": true,
+  "autoJournalOnMiss": false
+}
+
+### Create habit — custom days (Mon, Wed, Fri = 1,3,5)
+POST {{base}}/habits
+Content-Type: application/json
+
+{
+  "title": "Strength training",
+  "frequency": "custom",
+  "customDays": "1,3,5",
+  "targetCount": 1,
+  "color": "#ef4444",
+  "icon": "💪",
+  "autoJournalOnComplete": false,
+  "autoJournalOnMiss": false
+}
+
+### Update habit
+PUT {{base}}/habits/HABIT_ID
+Content-Type: application/json
+
+{
+  "title": "Morning run (updated)",
+  "color": "#0ea5e9"
+}
+
+### Check habit — mark complete for today
+POST {{base}}/habits/HABIT_ID/check
+Content-Type: application/json
+
+{
+  "date": "2026-04-04",
+  "completed": true,
+  "note": "Ran 5km in 28 minutes"
+}
+
+### Check habit — unmark (set incomplete)
+POST {{base}}/habits/HABIT_ID/check
+Content-Type: application/json
+
+{
+  "date": "2026-04-04",
+  "completed": false
+}
+
+### Get habit stats — last 30 days (default)
+GET {{base}}/habits/HABIT_ID/stats
+
+### Get habit stats — last 90 days
+GET {{base}}/habits/HABIT_ID/stats?days=90
+
+### Archive (delete) habit
+DELETE {{base}}/habits/HABIT_ID

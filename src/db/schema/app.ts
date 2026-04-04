@@ -5,6 +5,7 @@ import {
   index,
   integer,
   pgTable,
+  real,
   text,
   timestamp,
 } from "drizzle-orm/pg-core"
@@ -52,6 +53,7 @@ export const journalPoints = pgTable(
     tag: text("tag", {
       enum: ["positive", "negative", "neutral"],
     }).notNull(),
+    mood: integer("mood"),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at")
       .defaultNow()
@@ -82,6 +84,19 @@ export const reflections = pgTable("reflections", {
     ],
   }).notNull(),
   content: text("content").notNull(),
+  cognitiveDistortion: text("cognitive_distortion", {
+    enum: [
+      "catastrophizing",
+      "all_or_nothing",
+      "mind_reading",
+      "overgeneralization",
+      "personalization",
+      "emotional_reasoning",
+      "should_statements",
+      "labeling",
+      "magnification",
+    ],
+  }),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at")
     .defaultNow()
@@ -237,4 +252,142 @@ export const goalProgressRelations = relations(goalProgress, ({ one }) => ({
     fields: [goalProgress.journalPointId],
     references: [journalPoints.id],
   }),
+}))
+
+export const achievements = pgTable(
+  "achievements",
+  {
+    id: text("id")
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    type: text("type", {
+      enum: [
+        "first_entry",
+        "week_warrior",
+        "month_master",
+        "score_100",
+        "reflective",
+        "goal_getter",
+        "balanced",
+        "deep_thinker",
+      ],
+    }).notNull(),
+    unlockedAt: timestamp("unlocked_at").defaultNow().notNull(),
+  },
+  (t) => [index("achievements_userId_idx").on(t.userId)],
+)
+
+export const habits = pgTable(
+  "habits",
+  {
+    id: text("id")
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    title: text("title").notNull(),
+    categoryId: text("category_id").references(() => categories.id, {
+      onDelete: "set null",
+    }),
+    frequency: text("frequency", {
+      enum: ["daily", "weekdays", "weekends", "custom"],
+    })
+      .default("daily")
+      .notNull(),
+    customDays: text("custom_days"),
+    targetCount: integer("target_count").default(1).notNull(),
+    color: text("color").notNull().default("#10b981"),
+    icon: text("icon").notNull().default("◉"),
+    autoJournalOnComplete: boolean("auto_journal_on_complete")
+      .default(false)
+      .notNull(),
+    autoJournalOnMiss: boolean("auto_journal_on_miss")
+      .default(false)
+      .notNull(),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    archivedAt: timestamp("archived_at"),
+  },
+  (t) => [index("habits_userId_idx").on(t.userId)],
+)
+
+export const habitEntries = pgTable(
+  "habit_entries",
+  {
+    id: text("id")
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
+    habitId: text("habit_id")
+      .notNull()
+      .references(() => habits.id, { onDelete: "cascade" }),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    date: date("date").notNull(),
+    completed: boolean("completed").default(false).notNull(),
+    note: text("note"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (t) => [
+    index("habit_entries_habitId_idx").on(t.habitId),
+    index("habit_entries_userId_date_idx").on(t.userId, t.date),
+  ],
+)
+
+export const userSettings = pgTable("user_settings", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  userId: text("user_id")
+    .notNull()
+    .unique()
+    .references(() => users.id, { onDelete: "cascade" }),
+  weekStartDay: text("week_start_day", { enum: ["monday", "sunday"] })
+    .default("monday")
+    .notNull(),
+  defaultTag: text("default_tag", {
+    enum: ["positive", "neutral", "negative"],
+  })
+    .default("positive")
+    .notNull(),
+  defaultScore: integer("default_score").default(1).notNull(),
+  showScoreOnDashboard: boolean("show_score_on_dashboard")
+    .default(true)
+    .notNull(),
+  theme: text("theme", { enum: ["light", "dark", "system"] })
+    .default("system")
+    .notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at")
+    .defaultNow()
+    .$onUpdate(() => new Date())
+    .notNull(),
+})
+
+export const achievementsRelations = relations(achievements, ({ one }) => ({
+  user: one(users, { fields: [achievements.userId], references: [users.id] }),
+}))
+
+export const habitsRelations = relations(habits, ({ one, many }) => ({
+  user: one(users, { fields: [habits.userId], references: [users.id] }),
+  category: one(categories, {
+    fields: [habits.categoryId],
+    references: [categories.id],
+  }),
+  entries: many(habitEntries),
+}))
+
+export const habitEntriesRelations = relations(habitEntries, ({ one }) => ({
+  habit: one(habits, {
+    fields: [habitEntries.habitId],
+    references: [habits.id],
+  }),
+  user: one(users, { fields: [habitEntries.userId], references: [users.id] }),
+}))
+
+export const userSettingsRelations = relations(userSettings, ({ one }) => ({
+  user: one(users, { fields: [userSettings.userId], references: [users.id] }),
 }))

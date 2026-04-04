@@ -1,0 +1,37 @@
+@base = http://localhost:8000/api
+
+### Score history — last 30 days (default)
+GET {{base}}/analytics/score-history
+
+### Score history — last 7 days
+GET {{base}}/analytics/score-history?days=7
+
+### Score history — last 90 days
+GET {{base}}/analytics/score-history?days=90
+
+### Score history — last year
+GET {{base}}/analytics/score-history?days=365
+
+### Year in Pixels — current year
+GET {{base}}/analytics/heatmap
+
+### Year in Pixels — specific year
+GET {{base}}/analytics/heatmap?year=2025
+
+### Weekly summary — current week
+GET {{base}}/analytics/weekly-summary
+
+### Weekly summary — specific week
+GET {{base}}/analytics/weekly-summary?week=2026-W14
+
+### Category breakdown — last 30 days (default)
+GET {{base}}/analytics/category-breakdown
+
+### Category breakdown — custom range
+GET {{base}}/analytics/category-breakdown?from=2026-01-01&to=2026-03-31
+
+### Score correlations — last 30 days (default)
+GET {{base}}/analytics/correlations
+
+### Score correlations — last 90 days
+GET {{base}}/analytics/correlations?days=90

@@ -22,6 +22,7 @@ export const createJournalPointSchema = z.object({
   categoryId: z.string().optional(),
   score: z.number().int().min(1).max(10).default(1),
   tag: tagEnum,
+  mood: z.number().int().min(1).max(5).optional(),
 })
 
 export const updateJournalPointSchema = createJournalPointSchema.partial()
@@ -40,12 +41,42 @@ export const journalIdSchema = z.object({
   id: z.string(),
 })
 
+const cognitiveDistortionEnum = z.enum([
+  "catastrophizing",
+  "all_or_nothing",
+  "mind_reading",
+  "overgeneralization",
+  "personalization",
+  "emotional_reasoning",
+  "should_statements",
+  "labeling",
+  "magnification",
+])
+
 export const createReflectionSchema = z.object({
   type: reflectionTypeEnum,
   content: z.string().min(1),
+  cognitiveDistortion: cognitiveDistortionEnum.optional(),
 })
 
 export const updateReflectionSchema = createReflectionSchema.partial()
+
+export const analyticsQuerySchema = z.object({
+  days: z.coerce.number().int().min(7).max(365).default(30),
+})
+
+export const heatmapQuerySchema = z.object({
+  year: z.coerce.number().int().min(2000).max(2100).optional(),
+})
+
+export const categoryBreakdownQuerySchema = z.object({
+  from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+})
+
+export const weeklySummaryQuerySchema = z.object({
+  week: z.string().optional(),
+})
 
 export const reflectionIdSchema = z.object({
   id: z.string(),

@@ -19,9 +19,21 @@ Content-Type: application/json
 {
   "title": "Finished the project plan",
   "description": "Completed all phases of the gratification app plan",
-  "date": "2026-04-03",
+  "date": "2026-04-04",
   "score": 5,
   "tag": "positive"
+}
+
+### Create journal point with mood
+POST {{base}}/journal
+Content-Type: application/json
+
+{
+  "title": "Difficult meeting at work",
+  "date": "2026-04-04",
+  "score": 3,
+  "tag": "negative",
+  "mood": 2
 }
 
 ### Get journal point
@@ -38,6 +50,9 @@ Content-Type: application/json
 ### Delete journal point
 DELETE {{base}}/journal/JOURNAL_ID
 
+### On This Day (entries from same date in past years)
+GET {{base}}/journal/on-this-day
+
 ### Add reflection
 POST {{base}}/journal/JOURNAL_ID/reflections
 Content-Type: application/json
@@ -45,6 +60,16 @@ Content-Type: application/json
 {
   "type": "lesson_learned",
   "content": "Breaking tasks into phases makes large projects manageable"
+}
+
+### Add reflection with cognitive distortion label
+POST {{base}}/journal/JOURNAL_ID/reflections
+Content-Type: application/json
+
+{
+  "type": "why_it_happened",
+  "content": "I assumed everything would go wrong before it even started",
+  "cognitiveDistortion": "catastrophizing"
 }
 
 ### Update reflection

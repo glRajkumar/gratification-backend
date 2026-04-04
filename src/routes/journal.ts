@@ -11,6 +11,7 @@ import {
   addReflection,
   updateReflection,
   deleteReflection,
+  getOnThisDay,
 } from "../controllers/journal"
 import {
   createJournalPointSchema,
@@ -27,8 +28,9 @@ const journalRouter = new Hono<AppEnv>()
 
 journalRouter.use(requireAuth)
 
-// Score endpoint first (before /:id) to avoid conflict
+// Named endpoints first (before /:id) to avoid route conflicts
 journalRouter.get("/score", zv("query", scoreQuerySchema), getDailyScore)
+journalRouter.get("/on-this-day", getOnThisDay)
 
 journalRouter.get("/", zv("query", journalQuerySchema), listJournalPoints)
 journalRouter.post("/", zv("json", createJournalPointSchema), createJournalPoint)

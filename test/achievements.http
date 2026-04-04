@@ -1,0 +1,4 @@
+@base = http://localhost:8000/api
+
+### List all achievements (locked + unlocked)
+GET {{base}}/achievements

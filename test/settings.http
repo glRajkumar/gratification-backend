@@ -1,0 +1,32 @@
+@base = http://localhost:8000/api
+
+### Get settings (returns defaults if not yet configured)
+GET {{base}}/settings
+
+### Update all settings
+PUT {{base}}/settings
+Content-Type: application/json
+
+{
+  "weekStartDay": "monday",
+  "defaultTag": "positive",
+  "defaultScore": 1,
+  "showScoreOnDashboard": true,
+  "theme": "system"
+}
+
+### Update single setting — dark theme
+PUT {{base}}/settings
+Content-Type: application/json
+
+{
+  "theme": "dark"
+}
+
+### Update single setting — week starts Sunday
+PUT {{base}}/settings
+Content-Type: application/json
+
+{
+  "weekStartDay": "sunday"
+}
