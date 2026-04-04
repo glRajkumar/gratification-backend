@@ -1,0 +1,22 @@
+@base = http://localhost:8000/api
+
+### Get current week's intention
+GET {{base}}/intentions/current
+
+### Set this week's intention
+POST {{base}}/intentions
+Content-Type: application/json
+
+{
+  "intention": "Focus on meaningful work and rest well each evening.",
+  "targetScore": 5,
+  "focusCategoryId": "CATEGORY_ID"
+}
+
+### Update intention (same endpoint — upserts)
+POST {{base}}/intentions
+Content-Type: application/json
+
+{
+  "intention": "Updated intention for the week."
+}

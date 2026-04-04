@@ -10,6 +10,10 @@ const DEFAULT_SETTINGS = {
   defaultScore: 1,
   showScoreOnDashboard: true,
   theme: "system" as const,
+  freezeTokens: 0,
+  morningEveningMode: false,
+  companionName: null as string | null,
+  weeklyIntentionEnabled: true,
 }
 
 export async function getSettings(c: Context<AppEnv>) {
@@ -34,6 +38,9 @@ export async function updateSettings(c: Context<AppEnv>) {
     defaultScore: number
     showScoreOnDashboard: boolean
     theme: "light" | "dark" | "system"
+    morningEveningMode: boolean
+    companionName: string
+    weeklyIntentionEnabled: boolean
   }>
 
   const existing = await db

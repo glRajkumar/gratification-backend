@@ -1,0 +1,35 @@
+@base = http://localhost:8000/api
+
+### Quick score entry (under 5 seconds — score + tag only)
+POST {{base}}/journal/quick
+Content-Type: application/json
+
+{
+  "score": 7,
+  "tag": "positive",
+  "date": "2026-04-04"
+}
+
+### Create entry with morning mode
+POST {{base}}/journal
+Content-Type: application/json
+
+{
+  "title": "Morning intention",
+  "date": "2026-04-04",
+  "score": 5,
+  "tag": "positive",
+  "entryMode": "morning"
+}
+
+### Create entry with evening mode
+POST {{base}}/journal
+Content-Type: application/json
+
+{
+  "title": "Evening review",
+  "date": "2026-04-04",
+  "score": 7,
+  "tag": "positive",
+  "entryMode": "evening"
+}

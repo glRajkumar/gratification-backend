@@ -23,6 +23,13 @@ export const createJournalPointSchema = z.object({
   score: z.number().int().min(1).max(10).default(1),
   tag: tagEnum,
   mood: z.number().int().min(1).max(5).optional(),
+  entryMode: z.enum(["morning", "evening"]).optional(),
+})
+
+export const createQuickJournalPointSchema = z.object({
+  score: z.number().int().min(1).max(10),
+  tag: tagEnum,
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Must be YYYY-MM-DD"),
 })
 
 export const updateJournalPointSchema = createJournalPointSchema.partial()

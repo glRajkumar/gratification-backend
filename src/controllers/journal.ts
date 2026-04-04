@@ -6,6 +6,7 @@ import type { AppEnv } from "../types/hono"
 import {
   checkJournalAchievements,
   checkReflectionAchievements,
+  checkScoreMilestones,
 } from "../utils/achievements"
 
 function weekBounds(weekStr: string): { start: string; end: string } {
@@ -67,12 +68,35 @@ export async function createJournalPoint(c: Context<AppEnv>) {
     score: number
     tag: "positive" | "negative" | "neutral"
     mood?: number
+    entryMode?: "morning" | "evening"
   }
   const [row] = await db
     .insert(journalPoints)
     .values({ ...body, userId })
     .returning()
   void checkJournalAchievements(userId, body.date)
+  void checkScoreMilestones(userId, body.date, body.score, body.tag)
+  return c.json(row, 201)
+}
+
+export async function createQuickJournalPoint(c: Context<AppEnv>) {
+  const userId = c.get("userId")
+  const body = c.req.valid("json" as never) as {
+    score: number
+    tag: "positive" | "negative" | "neutral"
+    date: string
+  }
+  const [row] = await db
+    .insert(journalPoints)
+    .values({
+      ...body,
+      userId,
+      title: "Quick entry",
+      isQuick: true,
+    })
+    .returning()
+  void checkJournalAchievements(userId, body.date)
+  void checkScoreMilestones(userId, body.date, body.score, body.tag)
   return c.json(row, 201)
 }
 

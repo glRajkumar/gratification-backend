@@ -1,65 +1,37 @@
-import { eq } from "drizzle-orm"
+import { and, eq, gte, or } from "drizzle-orm"
 import type { Context } from "hono"
 import { db } from "../lib/db"
-import { journalPoints } from "../db/schema/app"
+import { journalPoints, userSettings, streakPartners } from "../db/schema/app"
+import { users } from "../db/schema/auth"
 import type { AppEnv } from "../types/hono"
 import { checkStreakAchievements } from "../utils/achievements"
 
-function computeStreaks(dates: string[]): {
+function computeStreakFull(dates: string[]): {
   currentStreak: number
   longestStreak: number
   lastEntryDate: string | null
+  strengthPercent: number
+  daysSinceEntry: number | null
 } {
   if (dates.length === 0)
-    return { currentStreak: 0, longestStreak: 0, lastEntryDate: null }
+    return {
+      currentStreak: 0,
+      longestStreak: 0,
+      lastEntryDate: null,
+      strengthPercent: 0,
+      daysSinceEntry: null,
+    }
 
   const sorted = [...new Set(dates)].sort()
   const todayStr = new Date().toISOString().slice(0, 10)
-  const yesterdayDate = new Date()
-  yesterdayDate.setDate(yesterdayDate.getDate() - 1)
-  const yesterdayStr = yesterdayDate.toISOString().slice(0, 10)
-
   const lastEntry = sorted[sorted.length - 1]
 
-  // If the last entry is older than yesterday, streak is 0 (grace period: can miss 1 day)
   const daysSinceLast = Math.floor(
     (new Date(todayStr).getTime() - new Date(lastEntry).getTime()) /
       (1000 * 60 * 60 * 24),
   )
-  if (daysSinceLast > 2) {
-    // Compute longest streak from history even if current is 0
-    let longest = 1
-    let current = 1
-    for (let i = sorted.length - 2; i >= 0; i--) {
-      const gap = Math.floor(
-        (new Date(sorted[i + 1]).getTime() - new Date(sorted[i]).getTime()) /
-          (1000 * 60 * 60 * 24),
-      )
-      if (gap <= 2) {
-        current++
-        longest = Math.max(longest, current)
-      } else {
-        current = 1
-      }
-    }
-    return { currentStreak: 0, longestStreak: longest, lastEntryDate: lastEntry }
-  }
 
-  // Compute current streak going backwards from last entry
-  let currentStreak = 1
-  for (let i = sorted.length - 2; i >= 0; i--) {
-    const gap = Math.floor(
-      (new Date(sorted[i + 1]).getTime() - new Date(sorted[i]).getTime()) /
-        (1000 * 60 * 60 * 24),
-    )
-    if (gap <= 2) {
-      currentStreak++
-    } else {
-      break
-    }
-  }
-
-  // Compute longest streak
+  // Compute longest streak from history
   let longestStreak = 1
   let runLength = 1
   for (let i = 1; i < sorted.length; i++) {
@@ -75,30 +47,324 @@ function computeStreaks(dates: string[]): {
     }
   }
 
-  return { currentStreak, longestStreak, lastEntryDate: lastEntry }
+  if (daysSinceLast > 3) {
+    return {
+      currentStreak: 0,
+      longestStreak,
+      lastEntryDate: lastEntry,
+      strengthPercent: 0,
+      daysSinceEntry: daysSinceLast,
+    }
+  }
+
+  // Compute current streak going backwards
+  let currentStreak = 1
+  for (let i = sorted.length - 2; i >= 0; i--) {
+    const gap = Math.floor(
+      (new Date(sorted[i + 1]).getTime() - new Date(sorted[i]).getTime()) /
+        (1000 * 60 * 60 * 24),
+    )
+    if (gap <= 2) currentStreak++
+    else break
+  }
+
+  // Gradual decay: 16.1
+  // daysSinceLast=0 (logged today) or 1 (grace) → 100%
+  // daysSinceLast=2 → 80%
+  // daysSinceLast=3 → 50%
+  let strengthPercent = 100
+  if (daysSinceLast === 2) strengthPercent = 80
+  else if (daysSinceLast === 3) strengthPercent = 50
+
+  return {
+    currentStreak,
+    longestStreak,
+    lastEntryDate: lastEntry,
+    strengthPercent,
+    daysSinceEntry: daysSinceLast,
+  }
+}
+
+function computeScoreStreak(
+  dailyScores: Map<string, number>,
+  avg30: number,
+): {
+  currentScoreStreak: number
+  longestScoreStreak: number
+} {
+  const sortedDates = [...dailyScores.keys()].sort()
+  const todayStr = new Date().toISOString().slice(0, 10)
+
+  let currentScoreStreak = 0
+  // Go backwards from today
+  const cursor = new Date(todayStr)
+  for (let i = 0; i < 365; i++) {
+    const dateStr = cursor.toISOString().slice(0, 10)
+    const score = dailyScores.get(dateStr)
+    if (score === undefined) break
+    if (score > avg30) currentScoreStreak++
+    else break
+    cursor.setDate(cursor.getDate() - 1)
+  }
+
+  let longestScoreStreak = 0
+  let run = 0
+  for (const date of sortedDates) {
+    const score = dailyScores.get(date) ?? 0
+    if (score > avg30) {
+      run++
+      longestScoreStreak = Math.max(longestScoreStreak, run)
+    } else {
+      run = 0
+    }
+  }
+
+  return { currentScoreStreak, longestScoreStreak }
 }
 
 export async function getStreaks(c: Context<AppEnv>) {
   const userId = c.get("userId")
 
   const rows = await db
-    .select({ date: journalPoints.date })
+    .select({ date: journalPoints.date, score: journalPoints.score, tag: journalPoints.tag })
     .from(journalPoints)
     .where(eq(journalPoints.userId, userId))
 
   const dates = rows.map((r) => r.date)
-  const { currentStreak, longestStreak, lastEntryDate } = computeStreaks(dates)
+  const { currentStreak, longestStreak, lastEntryDate, strengthPercent, daysSinceEntry } =
+    computeStreakFull(dates)
 
-  // Fire and forget achievement checks
   void checkStreakAchievements(userId, currentStreak)
 
   const milestones = [7, 14, 30, 60, 100, 365]
   const nextMilestone = milestones.find((m) => m > currentStreak) ?? null
+
+  // Score streak (16.2)
+  const dailyMap = new Map<string, number>()
+  for (const row of rows) {
+    const cur = dailyMap.get(row.date) ?? 0
+    if (row.tag === "positive") dailyMap.set(row.date, cur + row.score)
+    else if (row.tag === "negative") dailyMap.set(row.date, cur - row.score)
+    else dailyMap.set(row.date, cur)
+  }
+
+  const thirtyDaysAgo = new Date()
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 29)
+  const fromStr = thirtyDaysAgo.toISOString().slice(0, 10)
+  const todayStr = new Date().toISOString().slice(0, 10)
+  const last30Scores = [...dailyMap.entries()]
+    .filter(([d]) => d >= fromStr && d <= todayStr)
+    .map(([, s]) => s)
+  const avg30 =
+    last30Scores.length > 0
+      ? last30Scores.reduce((a, b) => a + b, 0) / last30Scores.length
+      : 0
+
+  const { currentScoreStreak, longestScoreStreak } = computeScoreStreak(dailyMap, avg30)
+
+  // Freeze tokens (16.3)
+  const [settings] = await db
+    .select({ freezeTokens: userSettings.freezeTokens })
+    .from(userSettings)
+    .where(eq(userSettings.userId, userId))
+  const freezeTokens = settings?.freezeTokens ?? 0
+
+  // Auto-credit: 1 token per 7 consecutive days (cap 3)
+  const weekCredits = Math.floor(currentStreak / 7)
+  const creditsEarned = Math.min(3, weekCredits)
+  if (creditsEarned > freezeTokens && freezeTokens < 3) {
+    const newTokens = Math.min(3, creditsEarned)
+    await db
+      .insert(userSettings)
+      .values({ userId, freezeTokens: newTokens })
+      .onConflictDoUpdate({
+        target: userSettings.userId,
+        set: { freezeTokens: newTokens },
+      })
+  }
+
+  // Partner streak (16.4)
+  const partner = await db
+    .select()
+    .from(streakPartners)
+    .where(
+      and(
+        or(
+          eq(streakPartners.userId, userId),
+          eq(streakPartners.partnerId, userId),
+        ),
+        eq(streakPartners.status, "active"),
+      ),
+    )
+    .limit(1)
+
+  let partnerData = null
+  if (partner[0]) {
+    const partnerId =
+      partner[0].userId === userId ? partner[0].partnerId : partner[0].userId
+    const [partnerUser] = await db
+      .select({ name: users.name, email: users.email })
+      .from(users)
+      .where(eq(users.id, partnerId))
+
+    const partnerTodayEntry = await db
+      .select({ id: journalPoints.id })
+      .from(journalPoints)
+      .where(
+        and(
+          eq(journalPoints.userId, partnerId),
+          eq(journalPoints.date, todayStr),
+        ),
+      )
+      .limit(1)
+
+    partnerData = {
+      id: partner[0].id,
+      partnerName: partnerUser?.name ?? partnerUser?.email ?? "Partner",
+      currentStreak: partner[0].currentStreak,
+      longestStreak: partner[0].longestStreak,
+      partnerLoggedToday: partnerTodayEntry.length > 0,
+      startDate: partner[0].startDate,
+    }
+  }
 
   return c.json({
     currentStreak,
     longestStreak,
     lastEntryDate,
     nextMilestone,
+    strengthPercent,
+    daysSinceEntry,
+    currentScoreStreak,
+    longestScoreStreak,
+    avg30: Math.round(avg30 * 10) / 10,
+    freezeTokens: Math.min(3, creditsEarned > (settings?.freezeTokens ?? 0) ? creditsEarned : freezeTokens),
+    partner: partnerData,
   })
+}
+
+export async function freezeStreak(c: Context<AppEnv>) {
+  const userId = c.get("userId")
+
+  const [settings] = await db
+    .select({ freezeTokens: userSettings.freezeTokens })
+    .from(userSettings)
+    .where(eq(userSettings.userId, userId))
+
+  const currentTokens = settings?.freezeTokens ?? 0
+  if (currentTokens <= 0) {
+    return c.json({ message: "No freeze tokens available" }, 400)
+  }
+
+  const todayStr = new Date().toISOString().slice(0, 10)
+
+  // Insert a "freeze" journal point that counts as an entry (keeps streak alive)
+  await db.insert(journalPoints).values({
+    userId,
+    title: "Streak freeze",
+    date: todayStr,
+    score: 1,
+    tag: "neutral",
+    isQuick: true,
+  })
+
+  // Deduct token
+  await db
+    .insert(userSettings)
+    .values({ userId, freezeTokens: currentTokens - 1 })
+    .onConflictDoUpdate({
+      target: userSettings.userId,
+      set: { freezeTokens: currentTokens - 1 },
+    })
+
+  return c.json({ message: "Streak frozen", freezeTokens: currentTokens - 1 })
+}
+
+export async function invitePartner(c: Context<AppEnv>) {
+  const userId = c.get("userId")
+  const { email } = c.req.valid("json" as never) as { email: string }
+
+  // Check for existing active partnership
+  const existing = await db
+    .select({ id: streakPartners.id })
+    .from(streakPartners)
+    .where(
+      and(
+        or(
+          eq(streakPartners.userId, userId),
+          eq(streakPartners.partnerId, userId),
+        ),
+        eq(streakPartners.status, "active"),
+      ),
+    )
+  if (existing.length > 0) {
+    return c.json({ message: "Already have an active partner streak" }, 400)
+  }
+
+  const [partnerUser] = await db
+    .select({ id: users.id })
+    .from(users)
+    .where(eq(users.email, email))
+
+  if (!partnerUser) return c.json({ message: "User not found" }, 404)
+  if (partnerUser.id === userId)
+    return c.json({ message: "Cannot partner with yourself" }, 400)
+
+  const inviteToken = crypto.randomUUID()
+  const [row] = await db
+    .insert(streakPartners)
+    .values({
+      userId,
+      partnerId: partnerUser.id,
+      inviteToken,
+      status: "pending",
+    })
+    .returning()
+
+  return c.json({ message: "Invite sent", partnershipId: row.id, inviteToken })
+}
+
+export async function acceptPartner(c: Context<AppEnv>) {
+  const userId = c.get("userId")
+  const { token } = c.req.valid("json" as never) as { token: string }
+
+  const [partnership] = await db
+    .select()
+    .from(streakPartners)
+    .where(
+      and(
+        eq(streakPartners.inviteToken, token),
+        eq(streakPartners.partnerId, userId),
+        eq(streakPartners.status, "pending"),
+      ),
+    )
+
+  if (!partnership) return c.json({ message: "Invalid or expired invite" }, 404)
+
+  const todayStr = new Date().toISOString().slice(0, 10)
+  await db
+    .update(streakPartners)
+    .set({ status: "active", startDate: todayStr })
+    .where(eq(streakPartners.id, partnership.id))
+
+  return c.json({ message: "Partner streak started" })
+}
+
+export async function removePartner(c: Context<AppEnv>) {
+  const userId = c.get("userId")
+
+  await db
+    .update(streakPartners)
+    .set({ status: "declined" })
+    .where(
+      and(
+        or(
+          eq(streakPartners.userId, userId),
+          eq(streakPartners.partnerId, userId),
+        ),
+        eq(streakPartners.status, "active"),
+      ),
+    )
+
+  return c.json({ message: "Partner streak removed" })
 }

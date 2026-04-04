@@ -54,6 +54,8 @@ export const journalPoints = pgTable(
       enum: ["positive", "negative", "neutral"],
     }).notNull(),
     mood: integer("mood"),
+    isQuick: boolean("is_quick").default(false).notNull(),
+    entryMode: text("entry_mode", { enum: ["morning", "evening"] }),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at")
       .defaultNow()
@@ -386,6 +388,12 @@ export const userSettings = pgTable("user_settings", {
   theme: text("theme", { enum: ["light", "dark", "system"] })
     .default("system")
     .notNull(),
+  freezeTokens: integer("freeze_tokens").default(0).notNull(),
+  morningEveningMode: boolean("morning_evening_mode").default(false).notNull(),
+  companionName: text("companion_name"),
+  weeklyIntentionEnabled: boolean("weekly_intention_enabled")
+    .default(true)
+    .notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at")
     .defaultNow()
@@ -425,3 +433,176 @@ export const attachmentsRelations = relations(attachments, ({ one }) => ({
   }),
   user: one(users, { fields: [attachments.userId], references: [users.id] }),
 }))
+
+export const streakPartners = pgTable(
+  "streak_partners",
+  {
+    id: text("id")
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    partnerId: text("partner_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    status: text("status", {
+      enum: ["pending", "active", "declined"],
+    })
+      .default("pending")
+      .notNull(),
+    currentStreak: integer("current_streak").default(0).notNull(),
+    longestStreak: integer("longest_streak").default(0).notNull(),
+    startDate: date("start_date"),
+    inviteToken: text("invite_token").notNull(),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at")
+      .defaultNow()
+      .$onUpdate(() => new Date())
+      .notNull(),
+  },
+  (t) => [
+    index("streak_partners_userId_idx").on(t.userId),
+    index("streak_partners_partnerId_idx").on(t.partnerId),
+  ],
+)
+
+export const scoreMilestones = pgTable(
+  "score_milestones",
+  {
+    id: text("id")
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    type: text("type", {
+      enum: [
+        "first_8_day",
+        "personal_best_day",
+        "first_positive_month",
+        "best_month_ever",
+        "better_floor",
+        "comeback",
+      ],
+    }).notNull(),
+    value: integer("value"),
+    date: date("date").notNull(),
+    celebratedAt: timestamp("celebrated_at"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (t) => [index("score_milestones_userId_idx").on(t.userId)],
+)
+
+export const challengeCompletions = pgTable(
+  "challenge_completions",
+  {
+    id: text("id")
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    challengeKey: text("challenge_key").notNull(),
+    journalPointId: text("journal_point_id").references(
+      () => journalPoints.id,
+      { onDelete: "set null" },
+    ),
+    date: date("date").notNull(),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (t) => [
+    index("challenge_completions_userId_idx").on(t.userId),
+    index("challenge_completions_date_idx").on(t.date),
+  ],
+)
+
+export const weeklyIntentions = pgTable(
+  "weekly_intentions",
+  {
+    id: text("id")
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    week: text("week").notNull(),
+    intention: text("intention").notNull(),
+    targetScore: integer("target_score"),
+    focusCategoryId: text("focus_category_id").references(
+      () => categories.id,
+      { onDelete: "set null" },
+    ),
+    journalPointId: text("journal_point_id").references(
+      () => journalPoints.id,
+      { onDelete: "set null" },
+    ),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at")
+      .defaultNow()
+      .$onUpdate(() => new Date())
+      .notNull(),
+  },
+  (t) => [
+    index("weekly_intentions_userId_idx").on(t.userId),
+    index("weekly_intentions_week_idx").on(t.week),
+  ],
+)
+
+export const streakPartnersRelations = relations(
+  streakPartners,
+  ({ one }) => ({
+    user: one(users, {
+      fields: [streakPartners.userId],
+      references: [users.id],
+      relationName: "partnershipUser",
+    }),
+    partner: one(users, {
+      fields: [streakPartners.partnerId],
+      references: [users.id],
+      relationName: "partnershipPartner",
+    }),
+  }),
+)
+
+export const scoreMilestonesRelations = relations(
+  scoreMilestones,
+  ({ one }) => ({
+    user: one(users, {
+      fields: [scoreMilestones.userId],
+      references: [users.id],
+    }),
+  }),
+)
+
+export const challengeCompletionsRelations = relations(
+  challengeCompletions,
+  ({ one }) => ({
+    user: one(users, {
+      fields: [challengeCompletions.userId],
+      references: [users.id],
+    }),
+    journalPoint: one(journalPoints, {
+      fields: [challengeCompletions.journalPointId],
+      references: [journalPoints.id],
+    }),
+  }),
+)
+
+export const weeklyIntentionsRelations = relations(
+  weeklyIntentions,
+  ({ one }) => ({
+    user: one(users, {
+      fields: [weeklyIntentions.userId],
+      references: [users.id],
+    }),
+    focusCategory: one(categories, {
+      fields: [weeklyIntentions.focusCategoryId],
+      references: [categories.id],
+    }),
+    journalPoint: one(journalPoints, {
+      fields: [weeklyIntentions.journalPointId],
+      references: [journalPoints.id],
+    }),
+  }),
+)

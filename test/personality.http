@@ -1,0 +1,19 @@
+@base = http://localhost:8000/api
+
+### Get score personality label
+GET {{base}}/analytics/personality
+
+### Get monthly Wrapped (previous month by default)
+GET {{base}}/analytics/wrapped
+
+### Get monthly Wrapped for a specific month
+GET {{base}}/analytics/wrapped?month=2026-03
+
+### Get anonymous score percentile vs cohort
+GET {{base}}/analytics/percentile
+
+### Get score milestones (marks as celebrated)
+GET {{base}}/analytics/milestones
+
+### Get community stats (anonymized, this week)
+GET {{base}}/analytics/community

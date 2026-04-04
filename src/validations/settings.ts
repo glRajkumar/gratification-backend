@@ -6,4 +6,7 @@ export const updateSettingsSchema = z.object({
   defaultScore: z.number().int().min(1).max(10).optional(),
   showScoreOnDashboard: z.boolean().optional(),
   theme: z.enum(["light", "dark", "system"]).optional(),
+  morningEveningMode: z.boolean().optional(),
+  companionName: z.string().max(30).optional(),
+  weeklyIntentionEnabled: z.boolean().optional(),
 })

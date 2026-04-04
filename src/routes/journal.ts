@@ -4,6 +4,7 @@ import { requireAuth } from "../middlewares/auth"
 import {
   listJournalPoints,
   createJournalPoint,
+  createQuickJournalPoint,
   getJournalPoint,
   updateJournalPoint,
   deleteJournalPoint,
@@ -16,6 +17,7 @@ import {
 import { uploadAttachments } from "../controllers/attachments"
 import {
   createJournalPointSchema,
+  createQuickJournalPointSchema,
   updateJournalPointSchema,
   journalQuerySchema,
   scoreQuerySchema,
@@ -32,6 +34,7 @@ journalRouter.use(requireAuth)
 // Named endpoints first (before /:id) to avoid route conflicts
 journalRouter.get("/score", zv("query", scoreQuerySchema), getDailyScore)
 journalRouter.get("/on-this-day", getOnThisDay)
+journalRouter.post("/quick", zv("json", createQuickJournalPointSchema), createQuickJournalPoint)
 
 journalRouter.get("/", zv("query", journalQuerySchema), listJournalPoints)
 journalRouter.post("/", zv("json", createJournalPointSchema), createJournalPoint)

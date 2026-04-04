@@ -7,6 +7,7 @@ import {
   getWeeklySummary,
   getCategoryBreakdown,
   getCorrelations,
+  getCommunityStats,
 } from "../controllers/analytics"
 import {
   analyticsQuerySchema,
@@ -40,5 +41,6 @@ analyticsRouter.get(
   zv("query", analyticsQuerySchema),
   getCorrelations,
 )
+analyticsRouter.get("/community", getCommunityStats)
 
 export { analyticsRouter }

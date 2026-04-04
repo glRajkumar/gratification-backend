@@ -340,6 +340,81 @@ export async function getCategoryBreakdown(c: Context<AppEnv>) {
   return c.json(result)
 }
 
+export async function getCommunityStats(c: Context<AppEnv>) {
+  const todayStr = new Date().toISOString().slice(0, 10)
+  const sevenDaysAgo = new Date()
+  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6)
+  const fromStr = sevenDaysAgo.toISOString().slice(0, 10)
+
+  const rows = await db
+    .select({
+      score: journalPoints.score,
+      tag: journalPoints.tag,
+      date: journalPoints.date,
+      categoryId: journalPoints.categoryId,
+      categoryName: categories.name,
+    })
+    .from(journalPoints)
+    .leftJoin(categories, eq(journalPoints.categoryId, categories.id))
+    .where(
+      and(
+        gte(journalPoints.date, fromStr),
+        lte(journalPoints.date, todayStr),
+      ),
+    )
+
+  const perUserDaily = new Map<string, Map<string, number>>()
+  // We don't expose userId in community — aggregate across all
+  let totalDailyScore = 0
+  let dailyCount = 0
+  const categoryFreq = new Map<string, number>()
+  const uniqueUserDates = new Set<string>()
+
+  for (const row of rows) {
+    // daily score aggregation (we need per-date)
+    const dateKey = row.date
+    if (!uniqueUserDates.has(dateKey)) {
+      uniqueUserDates.add(dateKey)
+    }
+
+    if (row.tag === "positive") totalDailyScore += row.score
+    else if (row.tag === "negative") totalDailyScore -= row.score
+
+    if (row.categoryName) {
+      categoryFreq.set(
+        row.categoryName,
+        (categoryFreq.get(row.categoryName) ?? 0) + 1,
+      )
+    }
+  }
+
+  // Daily average across all users/days
+  const avgDailyScore =
+    uniqueUserDates.size > 0
+      ? Math.round((totalDailyScore / uniqueUserDates.size) * 10) / 10
+      : 0
+
+  // Top positive category this week
+  let topCategory: string | null = null
+  let topCategoryCount = 0
+  for (const [name, freq] of categoryFreq) {
+    if (freq > topCategoryCount) {
+      topCategoryCount = freq
+      topCategory = name
+    }
+  }
+
+  // Total active users this week (approximate)
+  const activeUsers = new Set(rows.map((r) => r.date)).size
+
+  return c.json({
+    weekAvgScore: avgDailyScore,
+    topPositiveCategory: topCategory,
+    totalEntries: rows.length,
+    activeDays: activeUsers,
+  })
+}
+
 export async function getCorrelations(c: Context<AppEnv>) {
   const userId = c.get("userId")
   const { days } = c.req.valid("query" as never) as { days?: number }

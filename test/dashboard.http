@@ -1,0 +1,4 @@
+@base = http://localhost:8000/api
+
+### Get dashboard context (greeting, streak, avg, score floor)
+GET {{base}}/dashboard/context

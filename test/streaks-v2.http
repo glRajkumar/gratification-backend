@@ -1,0 +1,26 @@
+@base = http://localhost:8000/api
+
+### Get full streak data (includes score streak, decay strength, freeze tokens, partner)
+GET {{base}}/streaks
+
+### Use a freeze token to protect streak on a missed day
+POST {{base}}/streaks/freeze
+
+### Invite a partner by email
+POST {{base}}/streaks/partner/invite
+Content-Type: application/json
+
+{
+  "email": "friend@example.com"
+}
+
+### Accept a partner invite by token
+POST {{base}}/streaks/partner/accept
+Content-Type: application/json
+
+{
+  "token": "INVITE_TOKEN_UUID"
+}
+
+### Remove active partner streak
+DELETE {{base}}/streaks/partner

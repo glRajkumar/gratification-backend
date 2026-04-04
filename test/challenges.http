@@ -1,0 +1,24 @@
+@base = http://localhost:8000/api
+
+### Get today's challenge prompt
+GET {{base}}/challenges/today
+
+### Mark today's challenge as completed (with linked journal point)
+POST {{base}}/challenges/complete
+Content-Type: application/json
+
+{
+  "challengeKey": "gratitude_specific",
+  "journalPointId": "JOURNAL_POINT_ID"
+}
+
+### Mark today's challenge as completed (without journal point)
+POST {{base}}/challenges/complete
+Content-Type: application/json
+
+{
+  "challengeKey": "gratitude_specific"
+}
+
+### Get challenge completion history
+GET {{base}}/challenges/history
