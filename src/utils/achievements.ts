@@ -1,6 +1,7 @@
-import { and, count, eq, gte, lte } from "drizzle-orm"
+import { and, count, eq } from "drizzle-orm"
+
+import { achievements, journalPoints, reflections, scoreMilestones } from "../db/schema"
 import { db } from "../lib/db"
-import { achievements, journalPoints, reflections, scoreMilestones } from "../db/schema/app"
 
 export type AchievementType =
   | "first_entry"

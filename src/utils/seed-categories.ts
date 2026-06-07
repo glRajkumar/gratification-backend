@@ -1,5 +1,5 @@
+import { categories } from "../db/schema"
 import { db } from "../lib/db"
-import { categories } from "../db/schema/app"
 
 const DEFAULTS = [
   { name: "Life", color: "#6366f1", icon: "🌱" },

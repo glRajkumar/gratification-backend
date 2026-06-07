@@ -1,9 +1,11 @@
 import { and, count, eq } from "drizzle-orm"
 import type { Context } from "hono"
-import { db } from "../lib/db"
-import { attachments, journalPoints } from "../db/schema/app"
-import { uploadAttachment, deleteAttachment, detectType } from "../services/cloudinary"
+
 import type { AppEnv } from "../types/hono"
+
+import { uploadAttachment, deleteAttachment, detectType } from "../services/cloudinary"
+import { attachments, journalPoints } from "../db/schema"
+import { db } from "../lib/db"
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10 MB
 const MAX_ATTACHMENTS_PER_POINT = 10

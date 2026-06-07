@@ -1,5 +1,8 @@
 import { eq } from "drizzle-orm"
 import type { Context } from "hono"
+
+import type { AppEnv } from "../types/hono"
+
 import { db } from "../lib/db"
 import {
   categories,
@@ -11,8 +14,7 @@ import {
   habits,
   habitEntries,
   attachments,
-} from "../db/schema/app"
-import type { AppEnv } from "../types/hono"
+} from "../db/schema"
 
 export async function exportData(c: Context<AppEnv>) {
   const userId = c.get("userId")
@@ -41,13 +43,13 @@ export async function exportData(c: Context<AppEnv>) {
     await Promise.all([
       journalIds.length > 0
         ? db
-            .select()
-            .from(reflections)
-            .where(
-              journalIds.length === 1
-                ? eq(reflections.journalPointId, journalIds[0])
-                : undefined,
-            )
+          .select()
+          .from(reflections)
+          .where(
+            journalIds.length === 1
+              ? eq(reflections.journalPointId, journalIds[0])
+              : undefined,
+          )
         : [],
       goalIds.length > 0
         ? db.select().from(goalProgress)
@@ -60,19 +62,19 @@ export async function exportData(c: Context<AppEnv>) {
   const allReflections =
     journalIds.length > 0
       ? await db.select().from(reflections).innerJoin(
-          journalPoints,
-          eq(reflections.journalPointId, journalPoints.id),
-        )
-          .then((rows) => rows.filter((r) => r.journal_points.userId === userId).map((r) => r.reflections))
+        journalPoints,
+        eq(reflections.journalPointId, journalPoints.id),
+      )
+        .then((rows) => rows.filter((r) => r.journal_points.userId === userId).map((r) => r.reflections))
       : []
 
   const allGoalProgress =
     goalIds.length > 0
       ? await db.select().from(goalProgress).innerJoin(
-          goals,
-          eq(goalProgress.goalId, goals.id),
-        )
-          .then((rows) => rows.filter((r) => r.goals.userId === userId).map((r) => r.goal_progress))
+        goals,
+        eq(goalProgress.goalId, goals.id),
+      )
+        .then((rows) => rows.filter((r) => r.goals.userId === userId).map((r) => r.goal_progress))
       : []
 
   return c.json({

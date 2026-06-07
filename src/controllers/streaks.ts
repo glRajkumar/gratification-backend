@@ -1,10 +1,11 @@
-import { and, eq, gte, or } from "drizzle-orm"
+import { and, eq, or } from "drizzle-orm"
 import type { Context } from "hono"
-import { db } from "../lib/db"
-import { journalPoints, userSettings, streakPartners } from "../db/schema/app"
-import { users } from "../db/schema/auth"
+
 import type { AppEnv } from "../types/hono"
+
+import { journalPoints, userSettings, streakPartners, users } from "../db/schema"
 import { checkStreakAchievements } from "../utils/achievements"
+import { db } from "../lib/db"
 
 function computeStreakFull(dates: string[]): {
   currentStreak: number
@@ -28,7 +29,7 @@ function computeStreakFull(dates: string[]): {
 
   const daysSinceLast = Math.floor(
     (new Date(todayStr).getTime() - new Date(lastEntry).getTime()) /
-      (1000 * 60 * 60 * 24),
+    (1000 * 60 * 60 * 24),
   )
 
   // Compute longest streak from history
@@ -37,7 +38,7 @@ function computeStreakFull(dates: string[]): {
   for (let i = 1; i < sorted.length; i++) {
     const gap = Math.floor(
       (new Date(sorted[i]).getTime() - new Date(sorted[i - 1]).getTime()) /
-        (1000 * 60 * 60 * 24),
+      (1000 * 60 * 60 * 24),
     )
     if (gap <= 2) {
       runLength++
@@ -62,7 +63,7 @@ function computeStreakFull(dates: string[]): {
   for (let i = sorted.length - 2; i >= 0; i--) {
     const gap = Math.floor(
       (new Date(sorted[i + 1]).getTime() - new Date(sorted[i]).getTime()) /
-        (1000 * 60 * 60 * 24),
+      (1000 * 60 * 60 * 24),
     )
     if (gap <= 2) currentStreak++
     else break

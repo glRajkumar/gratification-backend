@@ -1,8 +1,10 @@
 import { eq } from "drizzle-orm"
 import type { Context } from "hono"
-import { db } from "../lib/db"
-import { userSettings } from "../db/schema/app"
+
 import type { AppEnv } from "../types/hono"
+
+import { userSettings } from "../db/schema"
+import { db } from "../lib/db"
 
 const DEFAULT_SETTINGS = {
   weekStartDay: "monday" as const,

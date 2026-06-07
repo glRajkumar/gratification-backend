@@ -1,8 +1,9 @@
 import { and, eq, gte, lte } from "drizzle-orm"
 import type { Context } from "hono"
-import { db } from "../lib/db"
-import { journalPoints, reflections } from "../db/schema/app"
+
 import type { AppEnv } from "../types/hono"
+import { journalPoints } from "../db/schema"
+import { db } from "../lib/db"
 
 function computeDailyScores(
   rows: { date: string; score: number; tag: string }[],
@@ -58,7 +59,7 @@ export async function getDashboardContext(c: Context<AppEnv>) {
   if (lastEntry) {
     const daysSinceLast = Math.floor(
       (new Date(todayStr).getTime() - new Date(lastEntry).getTime()) /
-        (1000 * 60 * 60 * 24),
+      (1000 * 60 * 60 * 24),
     )
     if (daysSinceLast <= 2) {
       currentStreak = 1
@@ -66,7 +67,7 @@ export async function getDashboardContext(c: Context<AppEnv>) {
         const gap = Math.floor(
           (new Date(uniqueDates[i + 1]).getTime() -
             new Date(uniqueDates[i]).getTime()) /
-            (1000 * 60 * 60 * 24),
+          (1000 * 60 * 60 * 24),
         )
         if (gap <= 2) currentStreak++
         else break
@@ -77,9 +78,9 @@ export async function getDashboardContext(c: Context<AppEnv>) {
   // Last entry date
   const daysSinceEntry = lastEntry
     ? Math.floor(
-        (new Date(todayStr).getTime() - new Date(lastEntry).getTime()) /
-          (1000 * 60 * 60 * 24),
-      )
+      (new Date(todayStr).getTime() - new Date(lastEntry).getTime()) /
+      (1000 * 60 * 60 * 24),
+    )
     : null
 
   // 7-day rolling average (last 7 days excluding today)

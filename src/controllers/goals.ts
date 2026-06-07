@@ -1,8 +1,10 @@
 import { and, eq } from "drizzle-orm"
 import type { Context } from "hono"
-import { db } from "../lib/db"
-import { goals, goalProgress, journalPoints } from "../db/schema/app"
+
 import type { AppEnv } from "../types/hono"
+
+import { goals, goalProgress, journalPoints } from "../db/schema"
+import { db } from "../lib/db"
 
 export async function listGoals(c: Context<AppEnv>) {
   const userId = c.get("userId")

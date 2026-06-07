@@ -1,8 +1,10 @@
 import { and, eq, gte, lte } from "drizzle-orm"
 import type { Context } from "hono"
-import { db } from "../lib/db"
-import { categories, journalPoints, todos, goals } from "../db/schema/app"
+
 import type { AppEnv } from "../types/hono"
+
+import { categories, journalPoints, todos, goals } from "../db/schema"
+import { db } from "../lib/db"
 
 function weekBounds(weekStr: string): { start: string; end: string } {
   const [year, week] = weekStr.split("-W").map(Number)
@@ -137,7 +139,7 @@ export async function getWeeklySummary(c: Context<AppEnv>) {
         (prevWeekDate.getDay() === 0 ? -6 : 1) +
         new Date(prevWeekDate.getFullYear(), 0, 4).getDay() -
         1) /
-        7,
+      7,
     ) + 1,
   ).padStart(2, "0")}`
   const { start: prevStart, end: prevEnd } = weekBounds(prevWeekStr)

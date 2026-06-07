@@ -1,8 +1,10 @@
 import { eq, and } from "drizzle-orm"
 import type { Context } from "hono"
-import { db } from "../lib/db"
-import { categories } from "../db/schema/app"
+
 import type { AppEnv } from "../types/hono"
+
+import { categories } from "../db/schema"
+import { db } from "../lib/db"
 
 export async function listCategories(c: Context<AppEnv>) {
   const userId = c.get("userId")

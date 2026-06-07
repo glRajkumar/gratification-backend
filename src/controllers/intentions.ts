@@ -1,8 +1,10 @@
 import { and, eq } from "drizzle-orm"
 import type { Context } from "hono"
-import { db } from "../lib/db"
-import { weeklyIntentions } from "../db/schema/app"
+
 import type { AppEnv } from "../types/hono"
+
+import { weeklyIntentions } from "../db/schema"
+import { db } from "../lib/db"
 
 function currentWeekStr(): string {
   const now = new Date()

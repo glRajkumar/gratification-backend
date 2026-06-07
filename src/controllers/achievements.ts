@@ -1,11 +1,13 @@
 import { eq } from "drizzle-orm"
 import type { Context } from "hono"
-import { db } from "../lib/db"
-import { achievements } from "../db/schema/app"
+
 import type { AppEnv } from "../types/hono"
+import { achievements } from "../db/schema"
+import { db } from "../lib/db"
+import type { AchievementType } from "../utils/achievements"
 
 const ACHIEVEMENT_META: Record<
-  string,
+  AchievementType,
   { label: string; description: string; icon: string }
 > = {
   first_entry: {
@@ -50,7 +52,7 @@ const ACHIEVEMENT_META: Record<
   },
 }
 
-const ALL_TYPES = Object.keys(ACHIEVEMENT_META)
+const ALL_TYPES = Object.keys(ACHIEVEMENT_META) as AchievementType[]
 
 export async function getAchievements(c: Context<AppEnv>) {
   const userId = c.get("userId")

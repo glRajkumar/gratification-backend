@@ -1,8 +1,10 @@
 import { and, eq, gte, isNull } from "drizzle-orm"
 import type { Context } from "hono"
-import { db } from "../lib/db"
-import { habits, habitEntries, journalPoints } from "../db/schema/app"
+
 import type { AppEnv } from "../types/hono"
+
+import { habits, habitEntries, journalPoints } from "../db/schema"
+import { db } from "../lib/db"
 
 function isScheduledDay(
   habit: { frequency: string; customDays: string | null },
@@ -75,7 +77,7 @@ export async function updateHabit(c: Context<AppEnv>) {
   const body = c.req.valid("json" as never) as Partial<{
     title: string
     categoryId: string
-    frequency: string
+    frequency: "daily" | "weekdays" | "weekends" | "custom"
     customDays: string
     targetCount: number
     color: string

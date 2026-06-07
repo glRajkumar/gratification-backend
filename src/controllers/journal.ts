@@ -1,13 +1,15 @@
 import { and, eq, gte, lte, sql } from "drizzle-orm"
 import type { Context } from "hono"
-import { db } from "../lib/db"
-import { journalPoints, reflections, attachments } from "../db/schema/app"
+
 import type { AppEnv } from "../types/hono"
+
 import {
   checkJournalAchievements,
   checkReflectionAchievements,
   checkScoreMilestones,
 } from "../utils/achievements"
+import { journalPoints, reflections, attachments } from "../db/schema"
+import { db } from "../lib/db"
 
 function weekBounds(weekStr: string): { start: string; end: string } {
   const [year, week] = weekStr.split("-W").map(Number)
@@ -238,7 +240,13 @@ export async function updateReflection(c: Context<AppEnv>) {
   const userId = c.get("userId")
   const { id } = c.req.param()
   const body = c.req.valid("json" as never) as Partial<{
-    type: string
+    type:
+      | "positive_aspect"
+      | "negative_aspect"
+      | "lesson_learned"
+      | "alternative_action"
+      | "why_it_happened"
+      | "custom"
     content: string
   }>
 

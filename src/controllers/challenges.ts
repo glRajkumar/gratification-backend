@@ -1,8 +1,9 @@
 import { and, eq } from "drizzle-orm"
 import type { Context } from "hono"
-import { db } from "../lib/db"
-import { challengeCompletions } from "../db/schema/app"
+
 import type { AppEnv } from "../types/hono"
+import { challengeCompletions } from "../db/schema"
+import { db } from "../lib/db"
 
 // 7 categories, one per day of the week (0=Sunday)
 const DAILY_CHALLENGES: Record<

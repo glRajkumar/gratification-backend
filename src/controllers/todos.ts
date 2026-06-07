@@ -1,8 +1,10 @@
 import { and, eq } from "drizzle-orm"
 import type { Context } from "hono"
-import { db } from "../lib/db"
-import { todos, journalPoints } from "../db/schema/app"
+
 import type { AppEnv } from "../types/hono"
+
+import { todos, journalPoints } from "../db/schema"
+import { db } from "../lib/db"
 
 export async function listTodos(c: Context<AppEnv>) {
   const userId = c.get("userId")
@@ -116,10 +118,10 @@ export async function completeTodo(c: Context<AppEnv>) {
     todo: updated,
     journalPointPrompt: !body.createJournalPoint
       ? {
-          message: "Would you like to log this as a journal point?",
-          todoId: id,
-          todoTitle: existing[0].title,
-        }
+        message: "Would you like to log this as a journal point?",
+        todoId: id,
+        todoTitle: existing[0].title,
+      }
       : null,
   })
 }

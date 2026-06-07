@@ -1,15 +1,15 @@
-import { and, avg, count, eq, gte, lte } from "drizzle-orm"
+import { and, eq, gte, lte } from "drizzle-orm"
 import type { Context } from "hono"
-import { db } from "../lib/db"
+
+import type { AppEnv } from "../types/hono"
+
 import {
   journalPoints,
   reflections,
   categories,
   scoreMilestones,
-} from "../db/schema/app"
-import { users } from "../db/schema/auth"
-import type { AppEnv } from "../types/hono"
-import { sql } from "drizzle-orm"
+} from "../db/schema"
+import { db } from "../lib/db"
 
 function computeDailyScores(
   rows: { date: string; score: number; tag: string }[],
@@ -158,7 +158,7 @@ export async function getPersonality(c: Context<AppEnv>) {
   const thisMonthAvg =
     dailyValues.length >= 1
       ? dailyValues.slice(-30).reduce((a, b) => a + b, 0) /
-        Math.min(30, dailyValues.length)
+      Math.min(30, dailyValues.length)
       : 0
   const comebackKid =
     lastMonthAvg !== null && thisMonthAvg > lastMonthAvg * 1.2
@@ -294,7 +294,7 @@ export async function getWrapped(c: Context<AppEnv>) {
     const gap = Math.floor(
       (new Date(sortedDates[i]).getTime() -
         new Date(sortedDates[i - 1]).getTime()) /
-        (1000 * 60 * 60 * 24),
+      (1000 * 60 * 60 * 24),
     )
     if (gap <= 2) { run++; streakPeak = Math.max(streakPeak, run) }
     else run = 1
