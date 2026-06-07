@@ -9,22 +9,8 @@ import {
   checkScoreMilestones,
 } from "../utils/achievements"
 import { journalPoints, reflections, attachments } from "../db/schema"
+import { weekBounds } from "../utils/dates"
 import { db } from "../lib/db"
-
-function weekBounds(weekStr: string): { start: string; end: string } {
-  const [year, week] = weekStr.split("-W").map(Number)
-  const jan4 = new Date(year, 0, 4)
-  const startOfWeek1 = new Date(jan4)
-  startOfWeek1.setDate(jan4.getDate() - ((jan4.getDay() + 6) % 7))
-  const start = new Date(startOfWeek1)
-  start.setDate(startOfWeek1.getDate() + (week - 1) * 7)
-  const end = new Date(start)
-  end.setDate(start.getDate() + 6)
-  return {
-    start: start.toISOString().slice(0, 10),
-    end: end.toISOString().slice(0, 10),
-  }
-}
 
 export async function listJournalPoints(c: Context<AppEnv>) {
   const userId = c.get("userId")
@@ -241,12 +227,12 @@ export async function updateReflection(c: Context<AppEnv>) {
   const { id } = c.req.param()
   const body = c.req.valid("json" as never) as Partial<{
     type:
-      | "positive_aspect"
-      | "negative_aspect"
-      | "lesson_learned"
-      | "alternative_action"
-      | "why_it_happened"
-      | "custom"
+    | "positive_aspect"
+    | "negative_aspect"
+    | "lesson_learned"
+    | "alternative_action"
+    | "why_it_happened"
+    | "custom"
     content: string
   }>
 

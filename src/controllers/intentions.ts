@@ -4,20 +4,8 @@ import type { Context } from "hono"
 import type { AppEnv } from "../types/hono"
 
 import { weeklyIntentions } from "../db/schema"
+import { currentWeekStr } from "../utils/dates"
 import { db } from "../lib/db"
-
-function currentWeekStr(): string {
-  const now = new Date()
-  const year = now.getFullYear()
-  const jan4 = new Date(year, 0, 4)
-  const startOfWeek1 = new Date(jan4)
-  startOfWeek1.setDate(jan4.getDate() - ((jan4.getDay() + 6) % 7))
-  const daysDiff = Math.floor(
-    (now.getTime() - startOfWeek1.getTime()) / (1000 * 60 * 60 * 24),
-  )
-  const week = Math.floor(daysDiff / 7) + 1
-  return `${year}-W${String(week).padStart(2, "0")}`
-}
 
 export async function getCurrentIntention(c: Context<AppEnv>) {
   const userId = c.get("userId")

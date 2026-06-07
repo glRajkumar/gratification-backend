@@ -2,21 +2,9 @@ import { and, eq, gte, lte } from "drizzle-orm"
 import type { Context } from "hono"
 
 import type { AppEnv } from "../types/hono"
+import { computeDailyScores } from "../utils/dates"
 import { journalPoints } from "../db/schema"
 import { db } from "../lib/db"
-
-function computeDailyScores(
-  rows: { date: string; score: number; tag: string }[],
-): Map<string, number> {
-  const map = new Map<string, number>()
-  for (const row of rows) {
-    const current = map.get(row.date) ?? 0
-    if (row.tag === "positive") map.set(row.date, current + row.score)
-    else if (row.tag === "negative") map.set(row.date, current - row.score)
-    else map.set(row.date, current)
-  }
-  return map
-}
 
 export async function getDashboardContext(c: Context<AppEnv>) {
   const userId = c.get("userId")

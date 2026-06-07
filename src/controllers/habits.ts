@@ -4,22 +4,8 @@ import type { Context } from "hono"
 import type { AppEnv } from "../types/hono"
 
 import { habits, habitEntries, journalPoints } from "../db/schema"
+import { isScheduledDay } from "../utils/habits"
 import { db } from "../lib/db"
-
-function isScheduledDay(
-  habit: { frequency: string; customDays: string | null },
-  date: string,
-): boolean {
-  const dayOfWeek = new Date(date + "T12:00:00").getDay() // 0=Sun, 6=Sat
-  if (habit.frequency === "daily") return true
-  if (habit.frequency === "weekdays") return dayOfWeek >= 1 && dayOfWeek <= 5
-  if (habit.frequency === "weekends") return dayOfWeek === 0 || dayOfWeek === 6
-  if (habit.frequency === "custom" && habit.customDays) {
-    const days = habit.customDays.split(",").map(Number)
-    return days.includes(dayOfWeek)
-  }
-  return true
-}
 
 export async function listHabits(c: Context<AppEnv>) {
   const userId = c.get("userId")

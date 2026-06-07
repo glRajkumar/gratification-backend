@@ -3,20 +3,9 @@ import type { Context } from "hono"
 
 import type { AppEnv } from "../types/hono"
 
+import { DEFAULT_SETTINGS } from "../utils/settings"
 import { userSettings } from "../db/schema"
 import { db } from "../lib/db"
-
-const DEFAULT_SETTINGS = {
-  weekStartDay: "monday" as const,
-  defaultTag: "positive" as const,
-  defaultScore: 1,
-  showScoreOnDashboard: true,
-  theme: "system" as const,
-  freezeTokens: 0,
-  morningEveningMode: false,
-  companionName: null as string | null,
-  weeklyIntentionEnabled: true,
-}
 
 export async function getSettings(c: Context<AppEnv>) {
   const userId = c.get("userId")

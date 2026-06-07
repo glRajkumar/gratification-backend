@@ -3,34 +3,10 @@ import type { Context } from "hono"
 
 import type { AppEnv } from "../types/hono"
 
+import { MAX_FILE_SIZE, MAX_ATTACHMENTS_PER_POINT, ALLOWED_MIME_TYPES } from "../utils/attachments"
 import { uploadAttachment, deleteAttachment, detectType } from "../services/cloudinary"
 import { attachments, journalPoints } from "../db/schema"
 import { db } from "../lib/db"
-
-const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10 MB
-const MAX_ATTACHMENTS_PER_POINT = 10
-const ALLOWED_MIME_TYPES = new Set([
-  // Images
-  "image/jpeg",
-  "image/png",
-  "image/gif",
-  "image/webp",
-  "image/heic",
-  "image/heif",
-  // Audio
-  "audio/mpeg",
-  "audio/mp3",
-  "audio/wav",
-  "audio/ogg",
-  "audio/webm",
-  "audio/m4a",
-  "audio/aac",
-  // Video
-  "video/mp4",
-  "video/webm",
-  "video/quicktime",
-  "video/x-msvideo",
-])
 
 export async function uploadAttachments(c: Context<AppEnv>) {
   const userId = c.get("userId")

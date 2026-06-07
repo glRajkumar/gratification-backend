@@ -9,37 +9,9 @@ import {
   categories,
   scoreMilestones,
 } from "../db/schema"
+import { linearRegressionSlope, stdDev } from "../utils/stats"
+import { computeDailyScores } from "../utils/dates"
 import { db } from "../lib/db"
-
-function computeDailyScores(
-  rows: { date: string; score: number; tag: string }[],
-): Map<string, number> {
-  const map = new Map<string, number>()
-  for (const row of rows) {
-    const cur = map.get(row.date) ?? 0
-    if (row.tag === "positive") map.set(row.date, cur + row.score)
-    else if (row.tag === "negative") map.set(row.date, cur - row.score)
-    else map.set(row.date, cur)
-  }
-  return map
-}
-
-function linearRegressionSlope(values: number[]): number {
-  const n = values.length
-  if (n < 2) return 0
-  const sumX = (n * (n - 1)) / 2
-  const sumY = values.reduce((a, b) => a + b, 0)
-  const sumXY = values.reduce((acc, y, i) => acc + i * y, 0)
-  const sumX2 = values.reduce((acc, _, i) => acc + i * i, 0)
-  return (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX)
-}
-
-function stdDev(values: number[]): number {
-  if (values.length < 2) return 0
-  const mean = values.reduce((a, b) => a + b, 0) / values.length
-  const variance = values.reduce((acc, v) => acc + (v - mean) ** 2, 0) / values.length
-  return Math.sqrt(variance)
-}
 
 export async function getPersonality(c: Context<AppEnv>) {
   const userId = c.get("userId")
